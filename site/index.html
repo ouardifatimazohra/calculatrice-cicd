@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculatrice CI/CD</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 420px; margin: 3rem auto; padding: 0 1rem; }
+    input, select, button { font-size: 1rem; padding: .5rem; margin: .25rem 0; width: 100%; box-sizing: border-box; }
+    #resultat { font-size: 1.4rem; margin-top: 1rem; min-height: 2rem; }
+    #statut { color: #666; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>Calculatrice CI/CD</h1>
+  <p id="statut">Chargement de Python…</p>
+
+  <input id="a" type="number" step="any" placeholder="Premier nombre">
+  <select id="op">
+    <option value="addition">Addition</option>
+    <option value="soustraction">Soustraction</option>
+    <option value="multiplication">Multiplication</option>
+    <option value="division">Division</option>
+    <option value="puissance">Puissance</option>
+  </select>
+  <input id="b" type="number" step="any" placeholder="Second nombre">
+  <button id="calculer" disabled>Calculer</button>
+  <div id="resultat"></div>
+
+  <script>
+    let pyodide;
+
+    async function init() {
+      pyodide = await loadPyodide();
+      const code = await (await fetch("calculatrice.py")).text();
+      pyodide.runPython(code);
+      document.getElementById("statut").textContent = "Prêt : calculatrice.py est chargé.";
+      document.getElementById("calculer").disabled = false;
+    }
+
+    function calculer() {
+      const a = parseFloat(document.getElementById("a").value);
+      const b = parseFloat(document.getElementById("b").value);
+      const op = document.getElementById("op").value;
+      const sortie = document.getElementById("resultat");
+      if (Number.isNaN(a) || Number.isNaN(b)) {
+        sortie.textContent = "Entre deux nombres.";
+        return;
+      }
+      try {
+        sortie.textContent = "Résultat : " + pyodide.runPython(op + "(" + a + ", " + b + ")");
+      } catch (e) {
+        sortie.textContent = "Erreur : " + e.message.trim().split("\n").pop();
+      }
+    }
+
+    document.getElementById("calculer").addEventListener("click", calculer);
+    init();
+  </script>
+</body>
+</html>
