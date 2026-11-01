@@ -63,3 +63,22 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  notify:
+    name: Notification Discord (échec)
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, deploy]
+    if: failure()
+    steps:
+      - name: Envoyer l'alerte
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          AUTHOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\": \"Pipeline en échec sur $REPO (branche $BRANCH, par $AUTHOR). Détails : $RUN_URL\"}" \
+            "$DISCORD_WEBHOOK"
+            
